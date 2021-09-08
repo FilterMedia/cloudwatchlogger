@@ -61,7 +61,7 @@ module CloudWatchLogger
                 add_event message_object if message_object
                 #send all elements if it has been more than 5 seconds
                 if @sent_at < Time.now - 5.seconds
-                   send
+                   send_events
                 end
                 #send all if we have more than 100 messages queued
                 if @events.count > 100
