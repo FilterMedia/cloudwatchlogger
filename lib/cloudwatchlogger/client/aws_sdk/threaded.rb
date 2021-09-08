@@ -41,19 +41,44 @@ module CloudWatchLogger
           @credentials = credentials
           @log_group_name = log_group_name
           @log_stream_name = log_stream_name
-          @opts = opts
-
+          @opts = opts 
+          @events = []
+          @sent_at = Time.now
           @queue = Queue.new
           @exiting = false
 
           super do
             loop do
               connect!(opts) if @client.nil?
-
-              message_object = @queue.pop
+              begin
+                message_object = @queue.pop(true)
+              rescue ThreadError
+                message_object = nil
+              end
               break if message_object == :__delivery_thread_exit_signal__
 
               begin
+                add_event message_object if message_object
+                #send all elements if it has been more than 5 seconds
+                if @sent_at < Time.now - 5.seconds
+                   send
+                end
+                #send all if we have more than 100 messages queued
+                if @events.count > 100
+                  send
+                end
+                # we not longer suspend when the queue is empty, so we must sleep
+                sleep 0.5
+
+              rescue Aws::CloudWatchLogs::Errors::InvalidSequenceTokenException => err
+                @sequence_token = err.message.split(' ').last
+                retry
+              end
+            end
+            
+            private
+            
+            def add_event message_object           
                 event = {
                   log_group_name: @log_group_name,
                   log_stream_name: @log_stream_name,
@@ -63,15 +88,17 @@ module CloudWatchLogger
                   }]
                 }
                 event[:sequence_token] = @sequence_token if @sequence_token
-                response = @client.put_log_events(event)
-                unless response.rejected_log_events_info.nil?
-                  raise CloudWatchLogger::LogEventRejected
-                end
-                @sequence_token = response.next_sequence_token
-              rescue Aws::CloudWatchLogs::Errors::InvalidSequenceTokenException => err
-                @sequence_token = err.message.split(' ').last
-                retry
+                @events += event
+            end
+
+            def send
+              response = @client.put_log_events(@events)
+              unless response.rejected_log_events_info.nil?
+                raise CloudWatchLogger::LogEventRejected
               end
+              @sent_at = Time.now
+              @events = []
+              @sequence_token = response.next_sequence_token
             end
           end
 
