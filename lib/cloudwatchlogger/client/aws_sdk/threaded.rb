@@ -75,10 +75,17 @@ module CloudWatchLogger
                 retry
               end
             end
+          end
+
+          at_exit do
+            exit!
+            join
+          end
+          
+          
+          private
             
-            private
-            
-            def self.add_event message_object           
+          def self.add_event message_object           
                 event = {
                   log_group_name: @log_group_name,
                   log_stream_name: @log_stream_name,
@@ -89,9 +96,9 @@ module CloudWatchLogger
                 }
                 event[:sequence_token] = @sequence_token if @sequence_token
                 @events += event
-            end
+          end
 
-            def self.send_events
+          def self.send_events
               response = @client.put_log_events(@events)
               unless response.rejected_log_events_info.nil?
                 raise CloudWatchLogger::LogEventRejected
@@ -99,12 +106,6 @@ module CloudWatchLogger
               @sent_at = Time.now
               @events = []
               @sequence_token = response.next_sequence_token
-            end
-          end
-
-          at_exit do
-            exit!
-            join
           end
         end
 
