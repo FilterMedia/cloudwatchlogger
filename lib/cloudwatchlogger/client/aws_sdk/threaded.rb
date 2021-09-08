@@ -81,9 +81,6 @@ module CloudWatchLogger
             exit!
             join
           end
-          
-          
-          private
             
           def self.add_event message_object           
                 event = {
