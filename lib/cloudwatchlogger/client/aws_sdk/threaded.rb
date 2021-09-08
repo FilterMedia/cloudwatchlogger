@@ -96,6 +96,7 @@ module CloudWatchLogger
           args = { http_open_timeout: opts[:open_timeout], http_read_timeout: opts[:read_timeout] }
           args[:region] = @opts[:region] if @opts[:region]
           args.merge!( @credentials.key?(:access_key_id) ? { credentials: Aws::Credentials.new(@credentials[:access_key_id], @credentials[:secret_access_key], @credentials[:session_token] )} : { credentials: Credentials.new()} )
+          byebug
           @client = Aws::CloudWatchLogs::Client.new(args)
           begin
             @client.create_log_stream(
