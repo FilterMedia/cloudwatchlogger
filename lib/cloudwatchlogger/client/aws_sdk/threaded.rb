@@ -82,27 +82,28 @@ module CloudWatchLogger
             join
           end
             
-          def self.add_event message_object           
-                event = {
-                  log_group_name: @log_group_name,
-                  log_stream_name: @log_stream_name,
-                  log_events: [{
-                    timestamp: message_object[:epoch_time],
-                    message:   message_object[:message]
-                  }]
-                }
-                event[:sequence_token] = @sequence_token if @sequence_token
-                @events += event
+          def self.add_event message_object
+            event = {
+              timestamp: message_object[:epoch_time],
+              message:   message_object[:message]
+            }
+            @events.push event
           end
 
           def self.send_events
-              response = @client.put_log_events(@events)
-              unless response.rejected_log_events_info.nil?
-                raise CloudWatchLogger::LogEventRejected
-              end
-              @sent_at = Time.now
-              @events = []
-              @sequence_token = response.next_sequence_token
+            payload = {
+              log_group_name: @log_group_name,
+              log_stream_name: @log_stream_name,
+              log_events: @events
+            }
+            payload[:sequence_token] = @sequence_token if @sequence_token
+            response = @client.put_log_events(payload)
+            unless response.rejected_log_events_info.nil?
+              raise CloudWatchLogger::LogEventRejected
+            end
+            @sent_at = Time.now
+            @events = []
+            @sequence_token = response.next_sequence_token
           end
         end
 
