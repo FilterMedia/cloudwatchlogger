@@ -65,7 +65,7 @@ module CloudWatchLogger
                 end
                 #send all if we have more than 100 messages queued
                 if @events.count > 100
-                  send
+                  send_events
                 end
                 # we not longer suspend when the queue is empty, so we must sleep
                 sleep 0.5
@@ -91,7 +91,7 @@ module CloudWatchLogger
                 @events += event
             end
 
-            def self.send
+            def self.send_events
               response = @client.put_log_events(@events)
               unless response.rejected_log_events_info.nil?
                 raise CloudWatchLogger::LogEventRejected
