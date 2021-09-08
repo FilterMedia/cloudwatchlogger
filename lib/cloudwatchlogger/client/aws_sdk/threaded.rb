@@ -54,7 +54,6 @@ module CloudWatchLogger
               break if message_object == :__delivery_thread_exit_signal__
 
               begin
-                byebug
                 event = {
                   log_group_name: @log_group_name,
                   log_stream_name: @log_stream_name,
@@ -97,7 +96,7 @@ module CloudWatchLogger
           args = { http_open_timeout: opts[:open_timeout], http_read_timeout: opts[:read_timeout] }
           args[:region] = @opts[:region] if @opts[:region]
           args.merge( @credentials.key?(:access_key_id) ? { credentials: Aws::Credentials.new(@credentials[:access_key_id], @credentials[:secret_access_key], @credentials[:session_token] )} : {} )
-
+          byebug
           @client = Aws::CloudWatchLogs::Client.new(args)
           begin
             @client.create_log_stream(
