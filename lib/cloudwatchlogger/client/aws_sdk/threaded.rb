@@ -54,6 +54,7 @@ module CloudWatchLogger
               break if message_object == :__delivery_thread_exit_signal__
 
               begin
+                byebug
                 event = {
                   log_group_name: @log_group_name,
                   log_stream_name: @log_stream_name,
