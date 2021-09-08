@@ -78,7 +78,7 @@ module CloudWatchLogger
             
             private
             
-            def add_event message_object           
+            def self.add_event message_object           
                 event = {
                   log_group_name: @log_group_name,
                   log_stream_name: @log_stream_name,
@@ -91,7 +91,7 @@ module CloudWatchLogger
                 @events += event
             end
 
-            def send
+            def self.send
               response = @client.put_log_events(@events)
               unless response.rejected_log_events_info.nil?
                 raise CloudWatchLogger::LogEventRejected
