@@ -79,7 +79,7 @@ module CloudWatchLogger
       end
 
       def setup_log_stream_name(name)
-        UUID.new
+        uuis = UUID.new
         prefix = name || default_log_stream_name
         @log_stream_name = "#{prefix}-#{uuid.generate}"
       end
