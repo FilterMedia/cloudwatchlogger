@@ -70,6 +70,7 @@ module CloudWatchLogger
       end
 
       def setup_credentials(credentials)
+        credentials[:session_token] ||= nil
         @credentials = credentials
       end
 
