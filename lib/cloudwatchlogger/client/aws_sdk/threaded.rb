@@ -51,19 +51,25 @@ module CloudWatchLogger
             loop do
               connect!(opts) if @client.nil?
               send_events if should_send?
-              begin
-                message_object = @queue.pop(true)
-              rescue ThreadError
-                message_object = nil
+              (0...@queue.size).each do
+                begin 
+                  message_objects.push(@queue.pop(true))
+                rescue ThreadError
+                  break
+                end
               end
-              break if message_object == :__delivery_thread_exit_signal__
-              
-              if message_object
-                send_events if should_send? message_object[:message].bytesize
-                add_event message_object
+              message_objects.each do |message_object|
+                if message_object == :__delivery_thread_exit_signal__
+                  send_events if @events.count > 0
+                  break
+                end
+                if message_object
+                  send_events if should_send? message_object[:message].bytesize
+                  add_event message_object
+                end
               end
               # we not longer suspend when the queue is empty, so we must sleep
-              sleep 0.5
+              sleep 0.1
 
             end
           end
