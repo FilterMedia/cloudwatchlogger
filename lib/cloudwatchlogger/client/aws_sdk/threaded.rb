@@ -81,7 +81,7 @@ module CloudWatchLogger
         end
 
         def event_queue_size
-          @events.sum { |event| event.message.bytesize }
+          @events.sum { |event| event[:message].bytesize }
         end
 
            
