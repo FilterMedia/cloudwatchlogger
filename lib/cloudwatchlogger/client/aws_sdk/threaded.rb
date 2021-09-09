@@ -59,6 +59,7 @@ module CloudWatchLogger
               break if message_object == :__delivery_thread_exit_signal__
               
               if message_object
+                byebug
                 send_events if should_send? message_object.bytesize
                 add_event message_object
               end
