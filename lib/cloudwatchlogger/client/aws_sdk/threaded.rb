@@ -75,7 +75,7 @@ module CloudWatchLogger
         end 
 
         def self.should_send? new_message_size = 0
-          return true if event_queue_size + new_message_size > 1048576  
+          return true if event_queue_size + new_message_size > 1048000  
           return true if @sent_at < Time.now - 5.seconds && @events.count > 0
           return true if @events.count > 5000
         end
@@ -88,7 +88,7 @@ module CloudWatchLogger
         def self.add_event message_object
           event = {
             timestamp: message_object[:epoch_time],
-            message:   message_object[:message]
+            message:   message_object[:message].slice(0..948000)
           }
           @events.push event
         end
