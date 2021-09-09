@@ -74,18 +74,18 @@ module CloudWatchLogger
           end
         end 
 
-        def self.should_send? new_message_size = 0
+        def should_send? new_message_size = 0
           return true if event_queue_size + new_message_size > 1048000  
           return true if @sent_at < Time.now - 5.seconds && @events.count > 0
           return true if @events.count > 5000
         end
 
-        def self.event_queue_size
+        def event_queue_size
           @events.sum { |event| event.message.bytesize }
         end
 
            
-        def self.add_event message_object
+        def add_event message_object
           event = {
             timestamp: message_object[:epoch_time],
             message:   message_object[:message].slice(0..948000)
@@ -93,7 +93,7 @@ module CloudWatchLogger
           @events.push event
         end
 
-        def self.send_events
+        def send_events
           payload = {
             log_group_name: @log_group_name,
             log_stream_name: @log_stream_name,
