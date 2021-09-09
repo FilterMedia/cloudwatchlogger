@@ -22,7 +22,7 @@ module CloudWatchLogger
           @thread.deliver(message)
           # Race condition? Sometimes we need to rescue this and start a new thread
         rescue NoMethodError
-          @thread.kill # Try not to leak threads, should already be dead anyway
+          @thread&.kill # Try not to leak threads, should already be dead anyway
           start_thread
           retry
         end
@@ -50,30 +50,21 @@ module CloudWatchLogger
           super do
             loop do
               connect!(opts) if @client.nil?
+              send_events if should_send?
               begin
                 message_object = @queue.pop(true)
               rescue ThreadError
                 message_object = nil
               end
               break if message_object == :__delivery_thread_exit_signal__
-
-              begin
-                add_event message_object if message_object
-                #send all elements if it has been more than 5 seconds
-                if @sent_at < Time.now - 5.seconds && @events.count > 0
-                   send_events
-                end
-                #send all if we have more than 100 messages queued
-                if @events.count > 100
-                  send_events
-                end
-                # we not longer suspend when the queue is empty, so we must sleep
-                sleep 0.5
-
-              rescue Aws::CloudWatchLogs::Errors::InvalidSequenceTokenException => err
-                @sequence_token = err.message.split(' ').last
-                retry
+              
+              if message_object
+                send_events if should_send? message_object.bytesize
+                add_event message_object
               end
+              # we not longer suspend when the queue is empty, so we must sleep
+              sleep 0.5
+
             end
           end
 
@@ -81,30 +72,48 @@ module CloudWatchLogger
             exit!
             join
           end
-            
-          def self.add_event message_object
-            event = {
-              timestamp: message_object[:epoch_time],
-              message:   message_object[:message]
-            }
-            @events.push event
+        end 
+
+        def self.should_send? new_message_size = 0
+          return true if event_queue_size + new_message_size > 1048576  
+          return true if @sent_at < Time.now - 5.seconds && @events.count > 0
+          return true if @events.count > 5000
+        end
+
+        def self.event_queue_size
+          @events.sum { |event| event.message.bytesize }
+        end
+
+           
+        def self.add_event message_object
+          event = {
+            timestamp: message_object[:epoch_time],
+            message:   message_object[:message]
+          }
+          @events.push event
+        end
+
+        def self.send_events
+          payload = {
+            log_group_name: @log_group_name,
+            log_stream_name: @log_stream_name,
+            log_events: @events
+          }
+          begin
+            payload[:sequence_token] = @sequence_token if @sequence_token            
+            response = @client.put_log_events(payload)
+          rescue Aws::CloudWatchLogs::Errors::InvalidSequenceTokenException => err
+            @sequence_token = err.message.split(' ').last
+            retry
           end
 
-          def self.send_events
-            payload = {
-              log_group_name: @log_group_name,
-              log_stream_name: @log_stream_name,
-              log_events: @events
-            }
-            payload[:sequence_token] = @sequence_token if @sequence_token
-            response = @client.put_log_events(payload)
-            unless response.rejected_log_events_info.nil?
-              raise CloudWatchLogger::LogEventRejected
-            end
-            @sent_at = Time.now
-            @events = []
-            @sequence_token = response.next_sequence_token
+          unless response.rejected_log_events_info.nil?
+            raise CloudWatchLogger::LogEventRejected
           end
+
+          @sent_at = Time.now
+          @events = []
+          @sequence_token = response.next_sequence_token
         end
 
         # Signals the queue that we're exiting
