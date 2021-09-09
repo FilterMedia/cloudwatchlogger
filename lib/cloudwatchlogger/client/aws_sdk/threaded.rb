@@ -49,6 +49,7 @@ module CloudWatchLogger
 
           super do
             loop do
+              message_objects = []
               connect!(opts) if @client.nil?
               send_events if should_send?
               (0...@queue.size).each do
