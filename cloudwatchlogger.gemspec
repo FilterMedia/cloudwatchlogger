@@ -24,4 +24,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'uuid', '~> 2'
   s.add_runtime_dependency 'multi_json', '~> 1'
   s.add_runtime_dependency 'aws-sdk-cloudwatchlogs', '~> 1'
+  s.add_runtime_dependency 'activesupport', '>= 5.2.6'
 end
