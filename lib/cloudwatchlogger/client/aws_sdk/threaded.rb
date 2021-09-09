@@ -70,7 +70,7 @@ module CloudWatchLogger
                 end
               end
               # we not longer suspend when the queue is empty, so we must sleep
-              sleep 0.1
+              sleep 1  
 
             end
           end
