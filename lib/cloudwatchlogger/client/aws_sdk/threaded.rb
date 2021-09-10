@@ -62,7 +62,7 @@ module CloudWatchLogger
               message_objects.each do |message_object|
                 if message_object == :__delivery_thread_exit_signal__
                   send_events if @events.count > 0
-                  break 2
+                  break 3
                 end
                 if message_object
                   send_events if should_send? message_object[:message].bytesize
