@@ -74,10 +74,9 @@ module CloudWatchLogger
               sleep 1  
             end
           end
-          kill
           at_exit do
             exit!
-            puts "sending internal exit signal"
+            join(5)
           end
         end 
 
