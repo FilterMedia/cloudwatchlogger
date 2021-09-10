@@ -64,7 +64,6 @@ module CloudWatchLogger
               end
               message_objects.each do |message_object|
                 if message_object == :__delivery_thread_exit_signal__
-                  puts "caught exit signal"
                   send_events if @events.count > 0
                   raise FinishThread
                 end
@@ -77,7 +76,6 @@ module CloudWatchLogger
               sleep 1  
             end
             rescue FinishThread
-              puts "exiting"
           end
           at_exit do
             exit!
