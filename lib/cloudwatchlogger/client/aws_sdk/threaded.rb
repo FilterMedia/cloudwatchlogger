@@ -63,7 +63,7 @@ module CloudWatchLogger
                 if message_object == :__delivery_thread_exit_signal__
                   puts "caught exit signal"
                   send_events if @events.count > 0
-                  break 3
+                  break 2
                 end
                 if message_object
                   send_events if should_send? message_object[:message].bytesize
@@ -74,11 +74,10 @@ module CloudWatchLogger
               sleep 1  
             end
           end
-
+          kill
           at_exit do
             exit!
             puts "sending internal exit signal"
-            join
           end
         end 
 
