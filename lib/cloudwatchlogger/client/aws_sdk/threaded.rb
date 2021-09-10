@@ -62,7 +62,7 @@ module CloudWatchLogger
               message_objects.each do |message_object|
                 if message_object == :__delivery_thread_exit_signal__
                   send_events if @events.count > 0
-                  break
+                  break 2
                 end
                 if message_object
                   send_events if should_send? message_object[:message].bytesize
@@ -71,7 +71,6 @@ module CloudWatchLogger
               end
               # we not longer suspend when the queue is empty, so we must sleep
               sleep 1  
-
             end
           end
 
