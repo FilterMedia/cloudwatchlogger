@@ -33,6 +33,9 @@ module CloudWatchLogger
           @thread = DeliveryThread.new(@credentials, @log_group_name, @log_stream_name, @opts)
         end
       end
+      
+      class FinishThread < StandardError
+      end
 
       class DeliveryThread < Thread
         def initialize(credentials, log_group_name, log_stream_name, opts = {})
@@ -63,8 +66,7 @@ module CloudWatchLogger
                 if message_object == :__delivery_thread_exit_signal__
                   puts "caught exit signal"
                   send_events if @events.count > 0
-                  byebug
-                  break 2
+                  raise FinishThread
                 end
                 if message_object
                   send_events if should_send? message_object[:message].bytesize
@@ -74,10 +76,12 @@ module CloudWatchLogger
               # we not longer suspend when the queue is empty, so we must sleep
               sleep 1  
             end
+            rescue FinishThread
+              puts "exiting"
           end
           at_exit do
             exit!
-            join(5)
+            join
           end
         end 
 
