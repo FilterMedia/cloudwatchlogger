@@ -63,6 +63,7 @@ module CloudWatchLogger
                 if message_object == :__delivery_thread_exit_signal__
                   puts "caught exit signal"
                   send_events if @events.count > 0
+                  byebug
                   break 2
                 end
                 if message_object
