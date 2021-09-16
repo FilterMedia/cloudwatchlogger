@@ -30,6 +30,7 @@ module CloudWatchLogger
         private
 
         def start_thread
+          puts "Starting thread"
           @thread = DeliveryThread.new(@credentials, @log_group_name, @log_stream_name, @opts)
         end
       end
@@ -73,9 +74,11 @@ module CloudWatchLogger
                 end
               end
               # we not longer suspend when the queue is empty, so we must sleep
-              sleep 1  
+              sleep 1
             end
+            puts "exit at end of loop"
             rescue FinishThread
+            puts "exit at FinishThread"
           end
           at_exit do
             exit!
