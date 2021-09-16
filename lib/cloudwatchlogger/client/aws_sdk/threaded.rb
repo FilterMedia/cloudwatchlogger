@@ -43,7 +43,7 @@ module CloudWatchLogger
           opts[:read_timeout] = opts[:read_timeout] || 120
           @credentials = credentials
           @log_group_name = log_group_name
-          @log_stream_name = log_stream_name
+          setup_log_stream_name log_stream_name
           @opts = opts 
           @events = []
           @sent_at = Time.now
@@ -124,6 +124,17 @@ module CloudWatchLogger
           @events = []
           @sequence_token = response.next_sequence_token
         end
+
+        # The stream should also have a hash for the current thread, so that threads do not 
+        # get sequence errors
+        def setup_log_stream_name(name)
+          uuid = UUID.new
+          prefix = name || default_log_stream_name
+          @log_stream_name = "#{prefix}-#{uuid.generate}"
+        end
+
+
+
 
         # Signals the queue that we're exiting
         def exit!
