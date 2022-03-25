@@ -12,7 +12,7 @@ module CloudWatchLogger
   def self.new(credentials, log_group_name, log_stream_name = nil, opts = {})
     client = CloudWatchLogger::Client.new(credentials, log_group_name, log_stream_name, opts)
     logger = Logger.new(client)
-    logger.class.include LoggerSilence
+    logger.class.include ActiveSupport::LoggerSilence
     class << logger
       attr_accessor :local_level
     end
